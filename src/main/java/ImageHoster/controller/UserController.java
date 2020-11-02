@@ -40,9 +40,17 @@ public class UserController {
     //This controller method is called when the request pattern is of type 'users/registration' and also the incoming request is of POST type
     //This method calls the business logic and after the user record is persisted in the database, directs to login page
     @RequestMapping(value = "users/registration", method = RequestMethod.POST)
-    public String registerUser(User user) {
+    public String registerUser(User user, Model model) {
+        //Check for password strength before registering the user successfully
+        if (isWeakPassword(user.getPassword())) {
+            model.addAttribute("User", user);
+
+            String error = "Password must contain atleast 1 alphabet, 1 number & 1 special character";
+            model.addAttribute("passwordTypeError", error);
+            return "users/registration.html";
+        }
         userService.registerUser(user);
-        return "redirect:/users/login";
+        return "users/login";
     }
 
     //This controller method is called when the request pattern is of type 'users/login'
@@ -79,4 +87,29 @@ public class UserController {
         model.addAttribute("images", images);
         return "index";
     }
+
+    private boolean isWeakPassword(String password) {
+        return calculatePasswordStrength(password) < 3;
+    }
+
+    private int calculatePasswordStrength(String password) {
+        //total score of password
+        int iPasswordScore = 0;
+
+        if (password.length() >= 3) {
+            //if it contains one digit, add 1 to total score
+            if (password.matches("(?=.*[0-9]).*"))
+                iPasswordScore += 1;
+
+            //if it contains one letter, add 1 to total score
+            if (password.matches("(?=.*[A-Za-z]).*"))
+                iPasswordScore += 1;
+
+            //if it contains one special character, add 1 to total score
+            if (password.matches("(?=.*[~!@#$%^&*()_-]).*"))
+                iPasswordScore += 1;
+        }
+        return iPasswordScore;
+    }
+
 }
